@@ -1,0 +1,24 @@
+We use 8 LEDs to represent an 8-bit value:
+
+Value < 16 : all LED's are off
+Value >= 16 : LED0 is on , all others are off
+Value >= 48 (16+32) : LED0, LED1 is on, all others are off
+Value >= 80 (16+64) : LED0, LED1, LED2 are on, all others are off 
+.. .
+Value >= 240(16+224 = 16+32+64+128): all LEDs are on
+
+First we create a fucntion that implements this readout.
+(Port B of my PIC is used to connect the LEDs)
+
+Then, we provide 1 sample (of the array of 512 samples) at a time to the program that displays the readout on the LEDs.
+
+Attention: This array represents a triangle wave starting at 0, increasing to 255 and then decreasing back to 0. 
+BUT, quite some noise is included on the input data.
+
+So, what we have done is filtering the data before passing to the readout. 
+
+To filter: a moving average of 8 values.
+
+Two switches are implemented:
+1) reset switch to restart the sequence at the first sample
+2) to swap the LED display: we display filtered data or the 'raw' one
