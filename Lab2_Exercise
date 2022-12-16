@@ -1,0 +1,9 @@
+AD conversion + Signal generation
+
+Connect 8 LEDs on PORTB.
+
+Firstly, we want to read the analog value on RA0 and we show the digital conversion on PORTB.
+To create the analog value we use a potentiometer connected to RA0.
+
+Then, we want to generate a signal using a 10KHz PWM: triangular waveform or sawtooth waveform.
+
