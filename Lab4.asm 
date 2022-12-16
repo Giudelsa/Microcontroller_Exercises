@@ -1,0 +1,308 @@
+;***********************************************************
+; File Header
+;***********************************************************
+    list p=18F25k50, r=hex, n=0
+    #include <p18f25k50.inc>	; file to provide register definitions for the specific processor (a lot of equ)
+
+; File registers
+d1 equ 0x02 ;used for the delay function
+d2 equ 0x03 ;used for the delay function
+change equ 0x05
+flag equ 0x04
+num equ 0x01
+;***********************************************************
+; Reset Vector
+;***********************************************************
+
+    ORG     0x1000	; Reset Vector
+			; When debugging:0x0000; when loading: 0x1000
+    GOTO    START
+
+;***********************************************************
+; Interrupt Vector
+;***********************************************************
+
+    ORG     0x1008	; Interrupt Vector HIGH priority
+    GOTO    inter_high	; When debugging:0x008; when loading: 0x1008
+    ORG     0x1018	; Interrupt Vector LOW priority
+    GOTO    inter_low	; When debugging:0x0008; when loading: 0x1018
+
+;***********************************************************
+; Program Code Starts Here
+;***********************************************************
+
+    ORG     0x1020	; When debugging:0x020; when loading: 0x1020
+
+START
+    movlw   0x80	; load value 0x80 in work register
+    movwf   OSCTUNE		
+    movlw   0x70	; load value 0x70 in work register
+    movwf   OSCCON		
+    movlw   0x10	; load value 0x10 to work register
+    movwf   OSCCON2		
+    clrf    LATA 	; Initialize PORTA by clearing output data latches
+    movlw   0x00 	; Value used to initialize data direction
+    movwf   TRISA 	; Set PORTA as output
+    movlw   0x00 	; Configure A/D for digital inputs 0000 1111
+    movwf   ANSELA	
+    movlw   0x00	; Configure comparators for digital input
+    movwf   CM1CON0
+    clrf    LATB	; Initialize PORTB by clearing output data latches
+    movlw   0x00	; Value used to initialize data direction
+    movwf   TRISB	; Set PORTB as output
+    clrf    LATC	; Initialize PORTC by clearing output data latches
+    movlw   0x01	; Value used to initialize data direction
+    movwf   TRISC	; Set RC0 as input
+
+    bcf     UCON,3	; to be sure to disable USB module
+    bsf     UCFG,3	; disable internal USB transceiver
+    
+main
+    
+    call init_lut
+    call init_song
+    
+    
+    
+init_timer
+    bsf INTCON, 6
+    bsf INTCON,5
+    movlw 0x46
+    movwf T0CON
+    movlw 0x48
+    movwf TMR0H
+    movlw 0xE5
+    movwf TMR0L
+    bsf T0CON, 7
+    movlw B'00110110'  ;Fosc/4 clock enabled , prescale 1:8, oscillator disabled, 16 bit operation, Enable TMR1
+   movwf T1CON
+    movlw 0x48
+    movwf TMR1H
+    movlw 0xE5
+    movwf TMR1L
+    bsf T1CON,0
+    
+init_tableptr
+    
+    movlw UPPER NOTES
+    movwf TBLPTRU
+    movlw HIGH NOTES
+    movwf TBLPTRH
+    movlw LOW NOTES
+    movwf TBLPTRL
+    bsf EECON1, EEPGD
+    bcf EECON1, CFGS
+    return
+    
+    
+    
+init_dac    
+    movlw 0xE0
+    movwf VREFCON1
+   
+    
+    bsf	    INTCON,GIE 
+    bsf  PIE1, TMR1IE
+
+    
+
+loop
+   btfsc change,0
+   call new_arrange
+   btfss flag,0
+   goto loop
+   call sample
+   movlw 0x1F
+   cpfsgt FSR1L
+   goto loop
+   lfsr 1, 0x010 
+    goto loop
+   
+    
+   
+    
+    
+sample
+    movf POSTINC1, 0 
+    movwf VREFCON2
+    bcf flag,0
+    return
+    
+;arrange
+    
+   ;movf POSTINC0
+   ; movwf TBLPTRL
+   ; btfsc STATUS, 0
+   ; incf  TBLPTRH
+   ; TBLRD*+
+   ; movf TABLAT,W
+   ; movwf TMR1L
+   ; TBLRD*+
+   ; movf TABLAT, W
+   ; movwf TMR1H
+    
+new_arrange
+    
+    movf POSTINC0
+    movwf num
+    call loop_call
+    TBLRD*+
+    movf TABLAT,W
+    movwf TMR1H
+    TBLRD*+
+    movf TABLAT, W
+    movwf TMR1L
+    movlw UPPER NOTES
+    movwf TBLPTRU
+    movlw HIGH NOTES
+    movwf TBLPTRH
+    movlw LOW NOTES
+    movwf TBLPTRL
+    bcf change,0
+    return
+    
+loop_call
+    
+   TBLRD*+
+    decfsz num,1
+    goto loop_call
+    return
+;***********************************************************
+; subroutines
+;***********************************************************
+
+init_lut 
+;     FSR1: will go though table of sine samples; starts at address 0x010
+    
+    lfsr    1, 0x010
+    movlw   D'15'	
+    movwf   0x10
+    movlw   D'21'	
+    movwf   0x11
+    movlw   D'26'	
+    movwf   0x12
+    movlw   D'29'	
+    movwf   0x13
+    movlw   D'30'	
+    movwf   0x14
+    movlw   D'29'	
+    movwf   0x15
+    movlw   D'26'	
+    movwf   0x16
+    movlw   D'21'	
+    movwf   0x17
+    movlw   D'15'	
+    movwf   0x18
+    movlw   D'9'	
+    movwf   0x19
+    movlw   D'4'	
+    movwf   0x1A
+    movlw   D'1'	
+    movwf   0x1B
+    movlw   D'0'	
+    movwf   0x1C
+    movlw   D'1'	
+    movwf   0x1D
+    movlw   D'4'	
+    movwf   0x1E
+    movlw   D'9'	
+    movwf   0x1F
+    return
+
+
+init_song
+    
+    ; FSR0: song
+    lfsr   0,0x050
+    
+    movlw  D'2'
+    movwf  0x50
+    movlw  D'4'
+    movwf  0x51
+    movlw  D'6'
+    movwf  0x52
+    movlw  D'2'
+    movwf  0x53
+    movlw  D'2'
+    movwf  0x54
+    movlw  D'4'
+    movwf  0x55
+    movlw  D'6'
+    movwf  0x56
+    movlw  D'2'
+    movwf  0x57
+    movlw  D'6'
+    movwf  0x58
+    movlw  D'8'
+    movwf  0x59
+    movlw  D'10'
+    movwf  0x5A
+    movlw  D'0'
+    movwf  0x5B
+    movlw  D'6'
+    movwf  0x5C
+    movlw  D'8'
+    movwf  0x5D
+    movlw  D'10'
+    movwf  0x5E
+     movlw  D'0'
+    movwf  0x5F
+    return
+ 
+
+    
+
+    
+    
+    
+delay1 ; complete this with e.g. something similar as a for loop delay ... but in assembly
+    INCFSZ d1, 
+    GOTO delay1
+    INCFSZ d2
+    goto delay1
+    return
+    
+;***********************************************************
+; interrupt handling
+;***********************************************************
+
+inter_high
+
+ih_tmr0
+    btfsc INTCON, 2
+    bsf change,0
+    
+    bcf INTCON, 2
+    
+ih_tmr1
+    btfsc PIR1, 0
+    bsf  flag,0
+    bcf PIR1,0
+    
+    retfie
+    
+inter_low
+    nop
+    retfie
+    
+
+;***********************************************************
+; table
+;***********************************************************
+    
+NOTES ;TMR1H TM1L
+    ;DB 0x00, 0x00   ;Silence?
+    ;calculate the correct values
+    DB 0xFF, 0xA6   ;C = do
+    DB 0xFF, 0xB0   ;D
+    DB 0xFF, 0xB8   ;E
+    DB 0xFF, 0xBC   ;F
+    DB 0xFF, 0xC4   ;G
+    DB 0xFF, 0xCA   ;A
+    DB 0xFF, 0xD1   ;B
+    
+    
+    
+    ;...
+    
+    END
