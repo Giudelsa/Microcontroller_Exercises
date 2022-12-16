@@ -1,0 +1,9 @@
+We implement a counter over SPI.
+
+Our PIC is set as a master and we transmit the counter values over the SPI master.
+The received values are displayed on the 8 LEDs on PORTB.
+
+The counter is a simple 8-bit binary counter.
+We use RB6 as an enable signal and RB7 to toggle UP/DOWN mode.
+
+Attention: in order to be able to see the LED change we have to set a delay.
