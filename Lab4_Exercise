@@ -1,0 +1,16 @@
+We want to reproduce a song (Vader Jacob).
+
+First step: we create the beat/rhythm of the different notes. 
+We setup timer0 in order to have a rhythm of around 0.5s.
+
+Second step: We set the DAC.
+
+Third step: We use timer1 as a 16 bit timer.
+We desire a 1kHz sine with 16 samples in each period so we set the value for timer1 in order to have a sine at 1kHz.
+
+Fourth step: we use the sample clock interrupt to update the DAC. 
+When we reach the end of the look up table we start over again.
+
+Last step: we use timer 0 as the rhythm to go through the buffer containing the tones of the song.
+Each time timer 0 interrupt you will update the frequency of the sample clock (timer 1). 
+The tone is the index in the LUT in program memory.
