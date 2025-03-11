@@ -1,5 +1,5 @@
 # Microcontroller_Exercises
-Codes for programming a PIC18F25K50 to perform some tasks.
+Codes for programming a PIC18F25K50 to perform different tasks.
 
 Lab1: Linear representation of values provided one at time
 
